@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Student, Batch, AttendanceRecord, FeeCollection, ModelTestMark } from '../types';
 import { Language, translations } from '../utils/translations';
+import { getMonthsDifference } from '../utils/dateHelpers';
 import {
   ResponsiveContainer,
   LineChart,
@@ -161,7 +162,9 @@ export default function Dashboard({
       const studentPaid = fees
         .filter((f) => f.studentId === student.id && f.status === 'Paid')
         .reduce((acc, curr) => acc + curr.amount, 0);
-      const sCourseFee = student.courseFee || 0;
+      const sCourseFee = student.paymentType === 'Monthly'
+        ? (student.courseFee || 0) * getMonthsDifference(student.admissionDate)
+        : (student.courseFee || 0);
       const studentDue = Math.max(sCourseFee - studentPaid, 0);
       return sum + studentDue;
     }, 0);

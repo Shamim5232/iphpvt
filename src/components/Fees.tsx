@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Student, Batch, FeeCollection } from '../types';
+import { getMonthsDifference } from '../utils/dateHelpers';
 import { CreditCard, Plus, Receipt, Search, CheckCircle, Clock, AlertCircle, Printer, Download, X } from 'lucide-react';
 
 interface FeesProps {
@@ -50,7 +51,7 @@ export default function Fees({
   const [formSearchQuery, setFormSearchQuery] = useState('');
   const [month, setMonth] = useState('2026-06');
   const [paymentDate, setPaymentDate] = useState(getLocalTodayString());
-  const [amount, setAmount] = useState('0');
+  const [amount, setAmount] = useState('1500');
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'bKash' | 'Nagad' | 'Rocket' | 'Bank'>('Cash');
   const [status, setStatus] = useState<'Paid' | 'Pending' | 'Unpaid'>('Paid');
 
@@ -59,7 +60,7 @@ export default function Fees({
     setFormSearchQuery('');
     setMonth('2026-06');
     setPaymentDate(getLocalTodayString());
-    setAmount('0');
+    setAmount('1500');
     setPaymentMethod('Cash');
     setStatus('Paid');
   };
@@ -99,8 +100,10 @@ export default function Fees({
     const totalPaid = fees
       .filter((fee) => fee.studentId === student.id && fee.status === 'Paid')
       .reduce((sum, fee) => sum + fee.amount, 0);
-    const sCourseFee = student.courseFee || 0;
-    const dueAmount = sCourseFee - totalPaid;
+    const sCourseFee = student.paymentType === 'Monthly'
+      ? (student.courseFee || 0) * getMonthsDifference(student.admissionDate)
+      : (student.courseFee || 0);
+    const dueAmount = Math.max(sCourseFee - totalPaid, 0);
 
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
@@ -191,8 +194,8 @@ export default function Fees({
     <!-- Payment Breakdown -->
     <div class="space-y-3.5 pt-2">
       <div class="flex justify-between items-center text-xs text-slate-600">
-        <span>মোট কোর্স ফি:</span>
-        <span class="font-mono font-bold text-slate-800">${sCourseFee} ৳</span>
+        <span>${student.paymentType === 'Monthly' ? 'দাবিকৃত মোট বেতন (Total Expected):' : 'মোট কোর্স ফি:'}</span>
+        <span class="font-mono font-bold text-slate-800">${sCourseFee} ৳ ${student.paymentType === 'Monthly' ? `(${student.courseFee} ৳/মাস)` : ''}</span>
       </div>
       <div class="flex justify-between items-center text-xs text-slate-600">
         <span>মোট পরিশোধিত ফি (পূর্বে সহ):</span>
@@ -408,16 +411,22 @@ export default function Fees({
                 const totalPaid = fees
                   .filter((f) => f.studentId === s.id && f.status === 'Paid')
                   .reduce((sum, f) => sum + f.amount, 0);
-                const sCourseFee = s.courseFee || 0;
-                const currentDue = sCourseFee - totalPaid;
+                const sCourseFee = s.paymentType === 'Monthly'
+                  ? (s.courseFee || 0) * getMonthsDifference(s.admissionDate)
+                  : (s.courseFee || 0);
+                const currentDue = Math.max(sCourseFee - totalPaid, 0);
                 const payingAmount = Number(amount || 0);
-                const remainingDueAfterThis = currentDue - (status === 'Paid' ? payingAmount : 0);
+                const remainingDueAfterThis = Math.max(currentDue - (status === 'Paid' ? payingAmount : 0), 0);
                 
                 return (
                   <div className="bg-slate-50 border border-slate-150 rounded-xl p-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-semibold text-slate-700 mt-3 col-span-1 sm:col-span-2">
                     <div>
-                      <span className="text-[10px] text-slate-400 font-bold block">মোট কোর্স ফি:</span>
-                      <span className="font-bold text-slate-950 font-mono">{sCourseFee} ৳</span>
+                      <span className="text-[10px] text-slate-400 font-bold block">
+                        {s.paymentType === 'Monthly' ? 'দাবিকৃত মোট বেতন:' : 'মোট কোর্স ফি:'}
+                      </span>
+                      <span className="font-bold text-slate-950 font-mono">
+                        {sCourseFee} ৳ {s.paymentType === 'Monthly' ? `(${s.courseFee} ৳/মাস)` : ''}
+                      </span>
                     </div>
                     <div>
                       <span className="text-[10px] text-slate-400 font-bold block">পূর্বে পরিশোধিত:</span>
@@ -617,8 +626,10 @@ export default function Fees({
                               const totalPaid = fees
                                 .filter((fee) => fee.studentId === s.id && fee.status === 'Paid')
                                 .reduce((sum, fee) => sum + fee.amount, 0);
-                              const sCourseFee = s.courseFee || 0;
-                              const dueAmount = sCourseFee - totalPaid;
+                              const sCourseFee = s.paymentType === 'Monthly'
+                                ? (s.courseFee || 0) * getMonthsDifference(s.admissionDate)
+                                : (s.courseFee || 0);
+                              const dueAmount = Math.max(sCourseFee - totalPaid, 0);
                               return dueAmount > 0 ? (
                                 <span className="text-rose-600 bg-rose-50 px-2 py-1 rounded border border-rose-100 font-black">
                                   {dueAmount} ৳
@@ -815,8 +826,10 @@ export default function Fees({
                 const totalPaid = fees
                   .filter((fee) => fee.studentId === s.id && fee.status === 'Paid')
                   .reduce((sum, fee) => sum + fee.amount, 0);
-                const sCourseFee = s.courseFee || 0;
-                const dueAmount = sCourseFee - totalPaid;
+                const sCourseFee = s.paymentType === 'Monthly'
+                  ? (s.courseFee || 0) * getMonthsDifference(s.admissionDate)
+                  : (s.courseFee || 0);
+                const dueAmount = Math.max(sCourseFee - totalPaid, 0);
                 return (
                   <div className="border-b border-dashed border-slate-200 pb-3 flex justify-between items-center text-sm font-bold">
                     <span className="text-slate-600">বাকি টাকা (Remaining Due):</span>
