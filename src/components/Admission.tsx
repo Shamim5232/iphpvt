@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Swal from 'sweetalert2';
 import { Student, Batch, FeeCollection, SchoolClass, Course } from '../types';
+import { getMonthsDifference, getMonthCycleInfo } from '../utils/dateHelpers';
 import { 
   Plus, 
   Search, 
@@ -111,6 +112,7 @@ export default function Admission({
   const [course, setCourse] = useState<string>('');
   const [studentClass, setStudentClass] = useState<string>('');
   const [courseFee, setCourseFee] = useState('1500');
+  const [paymentType, setPaymentType] = useState<'Course' | 'Monthly'>('Course');
 
   useEffect(() => {
     if (!course && courses.length > 0) {
@@ -186,6 +188,7 @@ export default function Admission({
     setCourse(courses[0]?.name || '');
     setStudentClass(classes[0]?.name || '');
     setCourseFee(courses[0]?.fee ? courses[0]?.fee.toString() : '0');
+    setPaymentType('Course');
     setEditingStudent(null);
   };
 
@@ -205,6 +208,7 @@ export default function Admission({
     setCourse(student.course || 'ICT Academic');
     setStudentClass(student.class || 'Inter 1st Year');
     setCourseFee(student.courseFee ? student.courseFee.toString() : '1500');
+    setPaymentType(student.paymentType || 'Course');
     setIsFormOpen(true);
   };
 
@@ -315,6 +319,7 @@ export default function Admission({
         course,
         class: studentClass,
         courseFee: Number(courseFee) || 0,
+        paymentType,
       });
 
       Swal.fire({
@@ -323,6 +328,9 @@ export default function Admission({
         icon: 'success',
         confirmButtonText: 'ঠিক আছে',
         confirmButtonColor: '#3b82f6',
+        customClass: {
+          container: 'font-sans'
+        }
       });
     } else {
       onAddStudent({
@@ -340,6 +348,7 @@ export default function Admission({
         course,
         class: studentClass,
         courseFee: Number(courseFee) || 0,
+        paymentType,
       });
 
       Swal.fire({
@@ -622,7 +631,10 @@ export default function Admission({
       const totalPaid = fees
         ? fees.filter((f) => f.studentId === s.id && f.status === 'Paid').reduce((sum, f) => sum + f.amount, 0)
         : 0;
-      const due = (s.courseFee || 0) - totalPaid;
+      const sCourseFee = s.paymentType === 'Monthly'
+        ? (s.courseFee || 0) * getMonthsDifference(s.admissionDate)
+        : (s.courseFee || 0);
+      const due = Math.max(sCourseFee - totalPaid, 0);
 
       return `
         <tr class="border-b border-slate-200 hover:bg-slate-50/50 text-slate-700 text-xs">
@@ -633,7 +645,12 @@ export default function Admission({
           <td class="py-2.5 px-3 text-center">${s.class || 'Inter 1st Year'}</td>
           <td class="py-2.5 px-3 text-left font-semibold text-slate-600">${batch ? batch.name.split(' - ')[0] : 'N/A'}</td>
           <td class="py-2.5 px-3 text-center font-mono">${s.phone}</td>
-          <td class="py-2.5 px-3 text-right font-semibold font-mono">${toBengaliNum(s.courseFee || 0)} ৳</td>
+          <td class="py-2.5 px-3 text-right font-semibold font-mono">
+            ${s.paymentType === 'Monthly' 
+              ? `${toBengaliNum(s.courseFee || 0)} ৳/মাস<br/><span style="font-size: 9px; color: #64748b;">(মোট: ${toBengaliNum(sCourseFee)} ৳)</span>`
+              : `${toBengaliNum(s.courseFee || 0)} ৳`
+            }
+          </td>
           <td class="py-2.5 px-3 text-right font-semibold font-mono text-emerald-600">${toBengaliNum(totalPaid)} ৳</td>
           <td class="py-2.5 px-3 text-right font-bold font-mono ${due > 0 ? 'text-rose-600' : 'text-slate-500'}">${toBengaliNum(due)} ৳</td>
         </tr>
@@ -696,8 +713,8 @@ export default function Admission({
       <div class="bg-blue-600 text-white text-xl font-black p-3.5 rounded-full inline-flex items-center justify-center mb-3">
         🎓
       </div>
-      <h1 class="text-2xl font-black text-slate-950 font-display">ICT PRIVATE HOME</h1>
-      <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">আইসিটি প্রাইভেট হোম</p>
+      <h1 class="text-2xl font-black text-slate-950 font-display">SMS PRO ACADEMY</h1>
+      <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">আইসিটি অ্যান্ড প্রোগ্রামিং ইনস্টিটিউট</p>
       <div class="mt-3 bg-blue-50 border border-blue-100 text-blue-800 text-xs font-extrabold px-4 py-1.5 rounded-full">
         শিক্ষার্থী তালিকা (Student List)
       </div>
@@ -750,7 +767,7 @@ export default function Admission({
     <div class="flex justify-between items-end text-xs text-slate-500 pt-16">
       <div>
         <span class="block">প্রিন্ট করার তারিখ: <strong>${formattedDate}</strong></span>
-        <span class="block text-[10px] text-slate-400 font-sans">প্রস্তুতকারী: IPH PVT এডমিন প্যানেল</span>
+        <span class="block text-[10px] text-slate-400 font-sans">প্রস্তুতকারী: SMS PRO এডমিন প্যানেল</span>
       </div>
       <div class="text-center">
         <div class="border-t border-slate-300 pt-1.5 w-36 font-bold text-slate-700">প্রধান পরিচালক স্বাক্ষর</div>
@@ -783,7 +800,10 @@ export default function Admission({
       const totalPaid = fees
         ? fees.filter((f) => f.studentId === s.id && f.status === 'Paid').reduce((sum, f) => sum + f.amount, 0)
         : 0;
-      const due = (s.courseFee || 0) - totalPaid;
+      const sCourseFee = s.paymentType === 'Monthly'
+        ? (s.courseFee || 0) * getMonthsDifference(s.admissionDate)
+        : (s.courseFee || 0);
+      const due = Math.max(sCourseFee - totalPaid, 0);
 
       return [
         s.roll,
@@ -794,7 +814,7 @@ export default function Admission({
         s.session || 'N/A',
         s.phone,
         s.address || '',
-        s.courseFee || 0,
+        s.paymentType === 'Monthly' ? `${s.courseFee || 0}/month (Total: ${sCourseFee})` : (s.courseFee || 0),
         totalPaid,
         due
       ];
@@ -1101,10 +1121,41 @@ export default function Admission({
                   </div>
                 </div>
 
-                {/* Course Fee */}
+                {/* Payment Type */}
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-700 block uppercase tracking-wider">
-                    কোর্স ফি (টাকা) *
+                    পেমেন্ট ধরণ (Payment Type) *
+                  </label>
+                  <div className="flex gap-4 py-2">
+                    <label className="flex items-center gap-2 text-slate-700 cursor-pointer font-semibold text-xs">
+                      <input
+                        type="radio"
+                        name="paymentType"
+                        value="Course"
+                        checked={paymentType === 'Course'}
+                        onChange={() => setPaymentType('Course')}
+                        className="text-blue-600 focus:ring-blue-500 h-4 w-4 cursor-pointer"
+                      />
+                      কোর্স ভিত্তিক (Course)
+                    </label>
+                    <label className="flex items-center gap-2 text-slate-700 cursor-pointer font-semibold text-xs">
+                      <input
+                        type="radio"
+                        name="paymentType"
+                        value="Monthly"
+                        checked={paymentType === 'Monthly'}
+                        onChange={() => setPaymentType('Monthly')}
+                        className="text-blue-600 focus:ring-blue-500 h-4 w-4 cursor-pointer"
+                      />
+                      মাসিক ভিত্তিক (Monthly)
+                    </label>
+                  </div>
+                </div>
+
+                {/* Course Fee / Monthly Fee */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 block uppercase tracking-wider">
+                    {paymentType === 'Monthly' ? 'মাসিক বেতন (টাকা) *' : 'কোর্স ফি (টাকা) *'}
                   </label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-3.5 h-4.5 w-4.5 text-slate-400" />
@@ -1112,7 +1163,7 @@ export default function Admission({
                       type="number"
                       value={courseFee}
                       onChange={(e) => setCourseFee(e.target.value)}
-                      placeholder="যেমন: ১৫০০"
+                      placeholder={paymentType === 'Monthly' ? 'যেমন: ১০০০' : 'যেমন: ১৫০০'}
                       className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition text-slate-700 font-semibold text-sm"
                       required
                       min="0"
@@ -1340,10 +1391,12 @@ export default function Admission({
                             .filter((f) => f.studentId === s.id && f.status === 'Paid')
                             .reduce((sum, f) => sum + f.amount, 0);
                           
-                          const sCourseFee = s.courseFee || 0;
+                          const sCourseFee = s.paymentType === 'Monthly'
+                            ? (s.courseFee || 0) * getMonthsDifference(s.admissionDate)
+                            : (s.courseFee || 0);
                           const isPaid = sCourseFee > 0 && totalPaid >= sCourseFee;
                           const hasRemaining = sCourseFee > 0 && totalPaid < sCourseFee && totalPaid > 0;
-                          const dueAmount = sCourseFee - totalPaid;
+                          const dueAmount = Math.max(sCourseFee - totalPaid, 0);
 
                           return (
                             <tr key={s.id} className="hover:bg-slate-50/30 transition">
@@ -1379,7 +1432,23 @@ export default function Admission({
                               </td>
                               <td className="py-3.5 px-3 md:px-4 text-xs hidden md:table-cell">
                                 <div className="flex flex-col gap-1 items-start">
-                                  <span className="font-bold text-slate-900">ফি: {sCourseFee} ৳</span>
+                                  <span className="font-bold text-slate-900">
+                                    {s.paymentType === 'Monthly'
+                                      ? `বেতন: ${s.courseFee} ৳/মাস`
+                                      : `ফি: ${s.courseFee} ৳`
+                                    }
+                                    {s.paymentType === 'Monthly' && (() => {
+                                      const cycleInfo = getMonthCycleInfo(s.admissionDate);
+                                      return (
+                                        <div className="text-[10px] text-slate-500 font-semibold mt-1 bg-slate-50 p-1.5 rounded-lg border border-slate-150 leading-relaxed max-w-[180px]">
+                                          <div>চলতি মাস: <strong className="text-blue-600 font-black font-mono">{toBengaliNum(cycleInfo.monthsCount)}</strong>তম মাস</div>
+                                          <div>চলতি সাইকেল: <strong className="text-amber-600 font-black font-mono">{toBengaliNum(cycleInfo.daysPassedInCycle)}/{toBengaliNum(cycleInfo.totalDaysInCycle)}</strong>তম দিন</div>
+                                          <div className="text-[9px] text-slate-400 font-normal">({cycleInfo.currentCycleStart} হতে {cycleInfo.currentCycleEnd})</div>
+                                          <div className="text-[9px] text-slate-500 mt-0.5 border-t border-slate-100 pt-0.5">মোট দাবি: <strong className="text-slate-700 font-black font-mono">{toBengaliNum(sCourseFee)} ৳</strong></div>
+                                        </div>
+                                      );
+                                    })()}
+                                  </span>
                                   {isPaid ? (
                                     <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
                                       <CheckCircle2 className="h-3 w-3 stroke-[2.5px]" /> পরিশোধিত
@@ -2163,8 +2232,10 @@ export default function Admission({
         const totalPaid = fees
           .filter((f) => f.studentId === viewingStudent.id && f.status === 'Paid')
           .reduce((sum, f) => sum + f.amount, 0);
-        const sCourseFee = viewingStudent.courseFee || 0;
-        const dueAmount = sCourseFee - totalPaid;
+        const sCourseFee = viewingStudent.paymentType === 'Monthly'
+          ? (viewingStudent.courseFee || 0) * getMonthsDifference(viewingStudent.admissionDate)
+          : (viewingStudent.courseFee || 0);
+        const dueAmount = Math.max(sCourseFee - totalPaid, 0);
         const studentFees = fees.filter((f) => f.studentId === viewingStudent.id);
 
         return (
@@ -2281,8 +2352,13 @@ export default function Admission({
                   <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-3">আর্থিক তথ্য ও হিসাব</h4>
                   <div className="grid grid-cols-3 gap-3">
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-center">
-                      <span className="text-[10px] text-slate-400 font-bold block">কোর্স ফি</span>
+                      <span className="text-[10px] text-slate-400 font-bold block">
+                        {viewingStudent.paymentType === 'Monthly' ? 'দাবিকৃত বেতন' : 'কোর্স ফি'}
+                      </span>
                       <span className="text-base font-black text-slate-800 font-mono">{sCourseFee} ৳</span>
+                      {viewingStudent.paymentType === 'Monthly' && (
+                        <span className="text-[9px] text-slate-500 font-semibold block mt-0.5">({viewingStudent.courseFee} ৳/মাস হিসেবে)</span>
+                      )}
                     </div>
                     <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-3 text-center">
                       <span className="text-[10px] text-emerald-600 font-bold block">পরিশোধিত</span>
@@ -2292,6 +2368,24 @@ export default function Admission({
                       <span className="text-[10px] text-rose-600 font-bold block">বাকি</span>
                       <span className="text-base font-black text-rose-700 font-mono">{dueAmount} ৳</span>
                     </div>
+
+                    {viewingStudent.paymentType === 'Monthly' && (() => {
+                      const cycleInfo = getMonthCycleInfo(viewingStudent.admissionDate);
+                      return (
+                        <div className="col-span-3 bg-slate-50 border border-slate-150 rounded-xl p-3.5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs font-semibold text-slate-700 mt-1">
+                          <div className="space-y-1">
+                            <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">মাসিক পেমেন্ট সাইকেল বিবরণ</span>
+                            <span className="text-slate-800 block">চলতি মাস: <strong className="text-blue-600 font-black font-mono">{toBengaliNum(cycleInfo.monthsCount)}</strong>তম মাস</span>
+                            <span className="text-[11px] text-slate-400 font-normal block">বর্তমান মেয়াদ: <b className="font-mono text-slate-600">{cycleInfo.currentCycleStart}</b> হতে <b className="font-mono text-slate-600">{cycleInfo.currentCycleEnd}</b></span>
+                          </div>
+                          <div className="bg-amber-50 text-amber-800 border border-amber-200/40 px-3 py-1.5 rounded-xl text-center self-stretch sm:self-auto flex sm:flex-col justify-between items-center min-w-[120px]">
+                            <span className="text-[9px] text-amber-600 font-bold block tracking-wider uppercase">আজকের দিন</span>
+                            <span className="font-black text-base font-mono text-amber-700">{toBengaliNum(cycleInfo.daysPassedInCycle)}/{toBengaliNum(cycleInfo.totalDaysInCycle)} দিন</span>
+                            <span className="text-[8px] text-amber-500 font-bold block sm:hidden">চলছে</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 
