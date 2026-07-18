@@ -390,6 +390,13 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                 </div>
               )}
             </form>
+
+            {/* Developer Credit Footer */}
+            <div className="pt-6 border-t border-slate-100 text-center">
+              <p className="text-xs text-slate-400 font-medium tracking-wide">
+                Developed By <span className="font-bold text-blue-600">ICT PVT HOME (Shamim)</span>
+              </p>
+            </div>
           </div>
         </div>
 

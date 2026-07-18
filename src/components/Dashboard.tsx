@@ -843,6 +843,13 @@ export default function Dashboard({
           </div>
         </div>
       </div>
+
+      {/* Developer Credit Footer */}
+      <div className="pt-8 pb-4 border-t border-slate-200/60 text-center">
+        <p className="text-xs text-slate-400 font-semibold tracking-wide">
+          Developed By <span className="font-extrabold text-blue-600">ICT PVT HOME (Shamim)</span>
+        </p>
+      </div>
     </div>
   );
 }

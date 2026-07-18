@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Student, Batch, ModelTestMark } from '../types';
-import { Award, Check, RefreshCw, AlertCircle, Sparkles } from 'lucide-react';
+import { Award, Check, RefreshCw, AlertCircle, Sparkles, RotateCcw } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 interface ModelTestsProps {
@@ -115,6 +115,40 @@ export default function ModelTests({
       };
     });
     setEditedMarks(randomized);
+  };
+
+  const handleResetAll = () => {
+    Swal.fire({
+      title: 'আপনি কি নিশ্চিত?',
+      text: 'এই ব্যাচের সকল ছাত্র-ছাত্রীর চলতি মাসের ৫টি মডেল টেস্টের নম্বর খালি করা হবে!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#EF4444',
+      cancelButtonColor: '#6B7280',
+      confirmButtonText: 'হ্যাঁ, রিসেট করুন',
+      cancelButtonText: 'বাতিল'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const resetMarks: typeof editedMarks = {};
+        Object.keys(editedMarks).forEach((studentId) => {
+          resetMarks[studentId] = {
+            test1: '',
+            test2: '',
+            test3: '',
+            test4: '',
+            test5: '',
+          };
+        });
+        setEditedMarks(resetMarks);
+        Swal.fire({
+          icon: 'success',
+          title: 'রিসেট সম্পন্ন!',
+          text: 'মার্কস শিটের ইনপুটগুলো খালি করা হয়েছে। সংরক্ষণ করতে নিচের বাটনে ক্লিক করুন।',
+          confirmButtonColor: '#3B82F6',
+          confirmButtonText: 'ঠিক আছে'
+        });
+      }
+    });
   };
 
   const batchStudents = students.filter((s) => s.batchId === selectedBatch);
@@ -316,8 +350,15 @@ export default function ModelTests({
           {batchStudents.length > 0 && (
             <div className="flex justify-end gap-3 pt-4">
               <button
+                onClick={handleResetAll}
+                className="flex items-center gap-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-6 py-3 rounded-xl font-semibold transition cursor-pointer"
+              >
+                <RotateCcw className="h-5 w-5" />
+                মার্কস রিসেট করুন
+              </button>
+              <button
                 onClick={handleSaveAll}
-                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-md shadow-emerald-100 transition"
+                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-md shadow-emerald-100 transition cursor-pointer"
               >
                 <Check className="h-5 w-5" />
                 মার্কস সংরক্ষণ করুন
