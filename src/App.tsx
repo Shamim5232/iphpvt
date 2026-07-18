@@ -67,6 +67,8 @@ export default function App() {
   };
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState<'admin' | 'student'>('admin');
+  const [loggedInStudentId, setLoggedInStudentId] = useState<string | null>(null);
 
   // Core States
   const [students, setStudents] = useState<Student[]>([]);
@@ -94,6 +96,9 @@ export default function App() {
   useEffect(() => {
     const isAuth = sessionStorage.getItem('sms_is_authenticated') === 'true';
     setIsAuthenticated(isAuth);
+    const role = (sessionStorage.getItem('sms_user_role') as 'admin' | 'student') || 'admin';
+    setUserRole(role);
+    setLoggedInStudentId(sessionStorage.getItem('sms_student_id'));
   }, []);
 
   // Persist activeTab when it changes
@@ -103,7 +108,11 @@ export default function App() {
 
   const handleLogout = () => {
     sessionStorage.removeItem('sms_is_authenticated');
+    sessionStorage.removeItem('sms_user_role');
+    sessionStorage.removeItem('sms_student_id');
     setIsAuthenticated(false);
+    setUserRole('admin');
+    setLoggedInStudentId(null);
   };
 
   // Function to load entire backup payload directly from XAMPP Server database
@@ -886,8 +895,34 @@ export default function App() {
     { id: 'settings', label: translations[lang].tab_settings, icon: Settings },
   ];
 
+  const filteredMenuItems = userRole === 'student'
+    ? menuItems.filter((item) => item.id === 'student_portal')
+    : menuItems;
+
   if (!isAuthenticated) {
-    return <Login onLoginSuccess={() => setIsAuthenticated(true)} />;
+    return (
+      <Login 
+        students={students}
+        onLoginSuccess={(role, studentId) => {
+          sessionStorage.setItem('sms_is_authenticated', 'true');
+          sessionStorage.setItem('sms_user_role', role);
+          if (studentId) {
+            sessionStorage.setItem('sms_student_id', studentId);
+            setLoggedInStudentId(studentId);
+          } else {
+            sessionStorage.removeItem('sms_student_id');
+            setLoggedInStudentId(null);
+          }
+          setUserRole(role);
+          setIsAuthenticated(true);
+          if (role === 'student') {
+            setActiveTab('student_portal');
+          } else {
+            setActiveTab('dashboard');
+          }
+        }} 
+      />
+    );
   }
 
   return (
@@ -927,7 +962,7 @@ export default function App() {
 
         {/* Navigation Menu */}
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-          {menuItems.map((item) => {
+          {filteredMenuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
@@ -1001,7 +1036,7 @@ export default function App() {
             </div>
 
             <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-              {menuItems.map((item) => {
+              {filteredMenuItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
                 return (
@@ -1239,6 +1274,7 @@ export default function App() {
                 attendance={attendance}
                 fees={fees}
                 modelTests={modelTests}
+                loggedInStudentId={loggedInStudentId}
               />
             )}
 

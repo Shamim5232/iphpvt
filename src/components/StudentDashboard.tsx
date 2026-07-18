@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Student, Batch, AttendanceRecord, FeeCollection, ModelTestMark } from '../types';
 import { BookOpen, Calendar, CreditCard, Award, ChevronRight, UserCheck, ShieldAlert, FileText, CheckCircle, Clock } from 'lucide-react';
 import { isFriday } from '../utils/dateHelpers';
-
+import Swal from 'sweetalert2';
 
 interface StudentDashboardProps {
   students: Student[];
@@ -10,7 +10,31 @@ interface StudentDashboardProps {
   attendance: AttendanceRecord[];
   fees: FeeCollection[];
   modelTests: ModelTestMark[];
+  loggedInStudentId?: string | null;
 }
+
+const normalizePhone = (phone: string): string => {
+  const bToE: Record<string, string> = {
+    '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4',
+    '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9'
+  };
+  let englishPhone = phone.split('').map(char => bToE[char] || char).join('');
+  englishPhone = englishPhone.replace(/\D/g, '');
+  if (englishPhone.startsWith('880')) {
+    englishPhone = englishPhone.substring(3);
+  } else if (englishPhone.startsWith('0')) {
+    englishPhone = englishPhone.substring(1);
+  }
+  return englishPhone;
+};
+
+const normalizeRoll = (roll: string): string => {
+  const bToE: Record<string, string> = {
+    '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4',
+    '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9'
+  };
+  return roll.split('').map(char => bToE[char] || char).join('').trim();
+};
 
 export default function StudentDashboard({
   students,
@@ -18,19 +42,50 @@ export default function StudentDashboard({
   attendance,
   fees,
   modelTests,
+  loggedInStudentId,
 }: StudentDashboardProps) {
   const [selectedRoll, setSelectedRoll] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
+  useEffect(() => {
+    if (loggedInStudentId) {
+      const s = students.find(x => x.id === loggedInStudentId);
+      if (s) {
+        setSelectedStudent(s);
+      }
+    } else {
+      setSelectedStudent(null);
+    }
+  }, [loggedInStudentId, students]);
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedRoll) return;
+    const query = selectedRoll.trim();
+    if (!query) return;
 
-    const match = students.find((s) => s.roll === selectedRoll);
+    const queryPhoneNorm = normalizePhone(query);
+    const queryRollNorm = normalizeRoll(query);
+
+    const match = students.find((s) => {
+      if (s.phone) {
+        const studentPhoneNorm = normalizePhone(s.phone);
+        if (queryPhoneNorm.length >= 4 && studentPhoneNorm.includes(queryPhoneNorm)) {
+          return true;
+        }
+      }
+      return normalizeRoll(s.roll) === queryRollNorm;
+    });
+
     if (match) {
       setSelectedStudent(match);
     } else {
-      alert('উক্ত রোল নাম্বার বিশিষ্ট কোনো শিক্ষার্থী পাওয়া যায়নি!');
+      Swal.fire({
+        icon: 'error',
+        title: 'শিক্ষার্থী পাওয়া যায়নি!',
+        text: 'উক্ত মোবাইল নম্বর অথবা রোল নম্বর বিশিষ্ট কোনো শিক্ষার্থী পাওয়া যায়নি!',
+        confirmButtonColor: '#4f46e5',
+        confirmButtonText: 'ঠিক আছে'
+      });
     }
   };
 
@@ -73,25 +128,28 @@ export default function StudentDashboard({
               <BookOpen className="h-8 w-8" />
             </div>
             <h2 className="text-xl font-bold text-slate-800">শিক্ষার্থী লগইন (Student Portal)</h2>
-            <p className="text-slate-500 text-sm">ড্যাশবোর্ডে নিজের প্রোগ্রেস ও পরীক্ষার প্রবেশপত্র দেখতে আপনার রোল নম্বরটি লিখুন।</p>
+            <p className="text-slate-500 text-sm">ড্যাশবোর্ডে নিজের প্রোগ্রেস ও পরীক্ষার প্রবেশপত্র দেখতে আপনার মোবাইল নম্বর অথবা রোল নম্বর লিখুন।</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700 block">আপনার রোল নাম্বারটি দিন</label>
+              <label className="text-xs font-semibold text-slate-700 block">মোবাইল নম্বর অথবা রোল নম্বর দিন</label>
               <input
                 type="text"
-                placeholder="যেমন: ১০১"
+                placeholder="যেমন: ০১৭১২৩৪৫৬৭৮ বা ১০১"
                 value={selectedRoll}
                 onChange={(e) => setSelectedRoll(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-slate-700 font-bold"
                 required
               />
+              <span className="text-[10px] text-slate-400 font-medium block">
+                * শিক্ষার্থীর সঠিক মোবাইল নম্বর বা আইডি রোল নম্বরটি ব্যবহার করে প্রবেশ করুন।
+              </span>
             </div>
 
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl transition shadow-md shadow-indigo-100"
+              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl transition shadow-md shadow-indigo-100 cursor-pointer"
             >
               প্রবেশ করুন (Login)
               <ChevronRight className="h-4.5 w-4.5" />
@@ -106,12 +164,12 @@ export default function StudentDashboard({
                 <button
                   key={s.id}
                   onClick={() => {
-                    setSelectedRoll(s.roll);
+                    setSelectedRoll(s.phone || s.roll);
                     setSelectedStudent(s);
                   }}
-                  className="text-xs bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 font-medium px-2.5 py-1.5 rounded-lg transition"
+                  className="text-xs bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 font-medium px-2.5 py-1.5 rounded-lg transition text-left"
                 >
-                  {s.name.split(' ')[0]} (রোল: {s.roll})
+                  {s.name.split(' ')[0]} (মোবাইল: {s.phone || 'N/A'}, রোল: {s.roll})
                 </button>
               ))}
             </div>

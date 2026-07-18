@@ -12,13 +12,39 @@ import {
   CreditCard,
   Award,
   Sparkles,
+  UserCheck,
 } from 'lucide-react';
+import { Student } from '../types';
 
 interface LoginProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: (role: 'admin' | 'student', studentId?: string) => void;
+  students: Student[];
 }
 
-export default function Login({ onLoginSuccess }: LoginProps) {
+const normalizePhone = (phone: string): string => {
+  const bToE: Record<string, string> = {
+    '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4',
+    '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9'
+  };
+  let englishPhone = phone.split('').map(char => bToE[char] || char).join('');
+  englishPhone = englishPhone.replace(/\D/g, '');
+  if (englishPhone.startsWith('880')) {
+    englishPhone = englishPhone.substring(3);
+  } else if (englishPhone.startsWith('0')) {
+    englishPhone = englishPhone.substring(1);
+  }
+  return englishPhone;
+};
+
+const normalizeRoll = (roll: string): string => {
+  const bToE: Record<string, string> = {
+    '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4',
+    '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9'
+  };
+  return roll.split('').map(char => bToE[char] || char).join('').trim();
+};
+
+export default function Login({ onLoginSuccess, students }: LoginProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -190,7 +216,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         localStorage.removeItem('sms_login_lockout_until');
         sessionStorage.setItem('sms_is_authenticated', 'true');
         addSecurityLog('Success', enteredUser);
-        onLoginSuccess();
+        onLoginSuccess('admin');
       } else {
         addSecurityLog('Failed', enteredUser || 'Unknown');
         
@@ -277,10 +303,11 @@ export default function Login({ onLoginSuccess }: LoginProps) {
 
         {/* Right Side: Elegant Login Form */}
         <div className="lg:col-span-7 p-8 md:p-14 flex flex-col justify-center bg-white">
-          <div className="max-w-md w-full mx-auto space-y-8">
+          <div className="max-w-md w-full mx-auto space-y-6">
+            
             {/* Form Header */}
             <div className="space-y-2.5 text-center lg:text-left">
-              <div className="lg:hidden flex items-center justify-center gap-2 mb-4">
+              <div className="lg:hidden flex items-center justify-center gap-2 mb-2">
                 <div className="bg-blue-600 p-2 rounded-xl text-white shadow-md">
                   <BookOpen className="h-5 w-5" />
                 </div>
@@ -288,6 +315,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                   SMS <span className="text-slate-900">PRO</span>
                 </span>
               </div>
+
               <span className="text-xs font-black text-blue-600 uppercase tracking-widest inline-flex items-center gap-1.5 bg-blue-50 px-3 py-1 rounded-full">
                 <Sparkles className="h-3.5 w-3.5 text-blue-500 animate-spin-slow" />
                 নিরাপদ অ্যাডমিন প্যানেল
@@ -326,7 +354,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                     placeholder="যেমন: admin"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full pl-10.5 pr-4 py-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-blue-500/10 text-slate-800 transition"
+                    className="w-full pl-10.5 pr-4 py-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:border-blue-500 focus:ring-blue-500/10 text-slate-800 transition"
                   />
                 </div>
               </div>
@@ -361,7 +389,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
               <button
                 type="submit"
                 disabled={loading || isLocked}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3.5 rounded-2xl text-xs tracking-wider transition duration-150 shadow-lg shadow-blue-600/15 cursor-pointer active:scale-98 flex items-center justify-center gap-2.5 disabled:opacity-70 disabled:pointer-events-none"
+                className="w-full text-white font-black py-3.5 rounded-2xl text-xs tracking-wider transition duration-150 shadow-lg cursor-pointer active:scale-98 flex items-center justify-center gap-2.5 disabled:opacity-70 disabled:pointer-events-none bg-blue-600 hover:bg-blue-700 shadow-blue-600/15"
               >
                 {isLocked ? (
                   `লকডাউন রয়েছে (অপেক্ষা করুন: ${lockoutTimeLeft} সে.)`
@@ -379,20 +407,21 @@ export default function Login({ onLoginSuccess }: LoginProps) {
               </button>
 
               {showDemoBtn && (
-                <div className="pt-2 text-center">
+                <div className="pt-1 text-center">
                   <button
                     type="button"
                     onClick={handleDemoFill}
-                    className="text-xs text-blue-600 hover:text-blue-800 hover:underline font-bold transition inline-flex items-center gap-1 cursor-pointer bg-blue-50/70 hover:bg-blue-50 px-4 py-2 rounded-xl"
+                    className="text-xs hover:underline font-bold transition inline-flex items-center gap-1 cursor-pointer px-4 py-2 rounded-xl text-blue-600 hover:text-blue-800 bg-blue-50/70 hover:bg-blue-50"
                   >
-                    <Sparkles className="h-3.5 w-3.5 text-blue-500" /> ডেমো লগইন তথ্য অটো-ফিল করুন
+                    <Sparkles className="h-3.5 w-3.5 text-blue-500" />{' '}
+                    ডেমো অ্যাডমিন তথ্য অটো-ফিল করুন
                   </button>
                 </div>
               )}
             </form>
 
             {/* Developer Credit Footer */}
-            <div className="pt-6 border-t border-slate-100 text-center">
+            <div className="pt-4 border-t border-slate-100 text-center">
               <p className="text-xs text-slate-400 font-medium tracking-wide">
                 Developed By <span className="font-bold text-blue-600">ICT PVT HOME (Shamim)</span>
               </p>

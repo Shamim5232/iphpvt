@@ -323,7 +323,7 @@ export default function Dashboard({
             {lang === 'bn' ? 'সহজ ও প্রফেশনাল ম্যানেজমেন্ট পোর্টাল' : 'Simple & Professional Management Portal'}
           </span>
           <h1 className="text-3xl md:text-4xl font-black tracking-tighter font-display leading-tight">
-            {lang === 'bn' ? 'স্মার্ট কোচিং ও একাডেমি সফটওয়্যার' : 'Smart Academy Management Software'}
+            {lang === 'bn' ? 'ICT Private Home Software' : 'ICT Private Home Software'}
           </h1>
           <p className="text-slate-300 font-medium text-xs md:text-sm">
             {lang === 'bn' 
