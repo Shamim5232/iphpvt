@@ -570,6 +570,7 @@ CREATE TABLE IF NOT EXISTS \`students\` (
   \`course\` varchar(100) DEFAULT 'ICT Academic',
   \`class\` varchar(100) DEFAULT 'Inter 1st Year',
   \`course_fee\` decimal(10,2) DEFAULT 0.00,
+  \`payment_type\` enum('Course','Monthly') DEFAULT 'Course',
   PRIMARY KEY (\`id\`),
   KEY \`fk_students_batch\` (\`batch_id\`),
   CONSTRAINT \`fk_students_batch\` FOREIGN KEY (\`batch_id\`) REFERENCES \`batches\` (\`id\`) ON DELETE CASCADE
@@ -771,6 +772,7 @@ try {
       course varchar(100) DEFAULT 'ICT Academic',
       class varchar(100) DEFAULT 'Inter 1st Year',
       course_fee decimal(10,2) DEFAULT 0.00,
+      payment_type enum('Course','Monthly') DEFAULT 'Course',
       PRIMARY KEY (id),
       KEY fk_students_batch (batch_id),
       CONSTRAINT fk_students_batch FOREIGN KEY (batch_id) REFERENCES batches (id) ON DELETE CASCADE
@@ -779,6 +781,11 @@ try {
     // Safe migration to add session column for existing tables
     try {
         $conn->exec("ALTER TABLE students ADD COLUMN session varchar(50) DEFAULT NULL;");
+    } catch(PDOException $e) {
+        // Column may already exist
+    }
+    try {
+        $conn->exec("ALTER TABLE students ADD COLUMN payment_type enum('Course','Monthly') DEFAULT 'Course';");
     } catch(PDOException $e) {
         // Column may already exist
     }
@@ -1055,8 +1062,8 @@ switch($action) {
 
             // 2. Insert Students
             if(!empty($data->students)) {
-                $stmt = $conn->prepare("INSERT INTO students (id, name, roll, batch_id, session, phone, email, gender, admission_date, father_name, mother_name, address, course, class, course_fee) 
-                                        VALUES (:id, :name, :roll, :batch_id, :session, :phone, :email, :gender, :admission_date, :father_name, :mother_name, :address, :course, :class, :course_fee)");
+                $stmt = $conn->prepare("INSERT INTO students (id, name, roll, batch_id, session, phone, email, gender, admission_date, father_name, mother_name, address, course, class, course_fee, payment_type) 
+                                        VALUES (:id, :name, :roll, :batch_id, :session, :phone, :email, :gender, :admission_date, :father_name, :mother_name, :address, :course, :class, :course_fee, :payment_type)");
                 foreach($data->students as $s) {
                     $stmt->execute([
                         ':id' => $s->id ?? '',
@@ -1073,7 +1080,8 @@ switch($action) {
                         ':address' => $s->address ?? null,
                         ':course' => $s->course ?? 'ICT Academic',
                         ':class' => $s->class ?? 'Inter 1st Year',
-                        ':course_fee' => isset($s->courseFee) ? (float)$s->courseFee : 0.00
+                        ':course_fee' => isset($s->courseFee) ? (float)$s->courseFee : 0.00,
+                        ':payment_type' => $s->paymentType ?? 'Course'
                     ]);
                 }
             }
@@ -1240,7 +1248,8 @@ switch($action) {
                     "address" => $s['address'],
                     "course" => $s['course'],
                     "class" => $s['class'],
-                    "courseFee" => (float)$s['course_fee']
+                    "courseFee" => (float)$s['course_fee'],
+                    "paymentType" => $s['payment_type'] ?? 'Course'
                 );
             }, $students);
 

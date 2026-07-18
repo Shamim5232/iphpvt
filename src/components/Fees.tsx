@@ -11,6 +11,21 @@ interface FeesProps {
   onUpdateFeeStatus: (id: string, status: 'Paid' | 'Pending' | 'Unpaid', paymentDate?: string) => void;
 }
 
+const getLocalTodayString = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getLocalCurrentMonthString = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+};
+
 export default function Fees({
   students,
   batches,
@@ -20,7 +35,7 @@ export default function Fees({
 }: FeesProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterMonth, setFilterMonth] = useState('2026-06');
+  const [filterMonth, setFilterMonth] = useState(getLocalCurrentMonthString());
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedReceipt, setSelectedReceipt] = useState<FeeCollection | null>(null);
 
@@ -38,18 +53,10 @@ export default function Fees({
     setCurrentPage(1);
   }, [searchQuery, filterMonth, filterStatus]);
 
-  const getLocalTodayString = () => {
-    const d = new Date();
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
   // Form states
   const [studentId, setStudentId] = useState('');
   const [formSearchQuery, setFormSearchQuery] = useState('');
-  const [month, setMonth] = useState('2026-06');
+  const [month, setMonth] = useState(getLocalCurrentMonthString());
   const [paymentDate, setPaymentDate] = useState(getLocalTodayString());
   const [amount, setAmount] = useState('1500');
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'bKash' | 'Nagad' | 'Rocket' | 'Bank'>('Cash');
@@ -58,7 +65,7 @@ export default function Fees({
   const resetForm = () => {
     setStudentId('');
     setFormSearchQuery('');
-    setMonth('2026-06');
+    setMonth(getLocalCurrentMonthString());
     setPaymentDate(getLocalTodayString());
     setAmount('1500');
     setPaymentMethod('Cash');

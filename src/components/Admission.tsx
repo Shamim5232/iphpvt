@@ -1437,17 +1437,6 @@ export default function Admission({
                                       ? `বেতন: ${s.courseFee} ৳/মাস`
                                       : `ফি: ${s.courseFee} ৳`
                                     }
-                                    {s.paymentType === 'Monthly' && (() => {
-                                      const cycleInfo = getMonthCycleInfo(s.admissionDate);
-                                      return (
-                                        <div className="text-[10px] text-slate-500 font-semibold mt-1 bg-slate-50 p-1.5 rounded-lg border border-slate-150 leading-relaxed max-w-[180px]">
-                                          <div>চলতি মাস: <strong className="text-blue-600 font-black font-mono">{toBengaliNum(cycleInfo.monthsCount)}</strong>তম মাস</div>
-                                          <div>চলতি সাইকেল: <strong className="text-amber-600 font-black font-mono">{toBengaliNum(cycleInfo.daysPassedInCycle)}/{toBengaliNum(cycleInfo.totalDaysInCycle)}</strong>তম দিন</div>
-                                          <div className="text-[9px] text-slate-400 font-normal">({cycleInfo.currentCycleStart} হতে {cycleInfo.currentCycleEnd})</div>
-                                          <div className="text-[9px] text-slate-500 mt-0.5 border-t border-slate-100 pt-0.5">মোট দাবি: <strong className="text-slate-700 font-black font-mono">{toBengaliNum(sCourseFee)} ৳</strong></div>
-                                        </div>
-                                      );
-                                    })()}
                                   </span>
                                   {isPaid ? (
                                     <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -2297,6 +2286,35 @@ export default function Admission({
                       {viewingStudent.course || 'ICT Academic'}
                     </span>
                   </div>
+                  <div>
+                    <span className="text-xs text-slate-400 font-bold block">পেমেন্ট ধরণ (Payment Type)</span>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-black mt-1 ${
+                      viewingStudent.paymentType === 'Monthly' 
+                        ? 'bg-amber-50 text-amber-700 border border-amber-100' 
+                        : 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                    }`}>
+                      {viewingStudent.paymentType === 'Monthly' ? 'মাস ভিত্তিক (Monthly)' : 'কোর্স ভিত্তিক (Course)'}
+                    </span>
+                  </div>
+                  {viewingStudent.paymentType === 'Monthly' && (() => {
+                    const cycleInfo = getMonthCycleInfo(viewingStudent.admissionDate);
+                    return (
+                      <>
+                        <div>
+                          <span className="text-xs text-slate-400 font-bold block">মাসিক ফি (বেতন)</span>
+                          <span className="text-sm font-black text-amber-700 font-mono mt-1 block">
+                            {toBengaliNum(viewingStudent.courseFee || 0)} ৳
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-xs text-slate-400 font-bold block">চলতি মাসের অগ্রগতির দিন</span>
+                          <span className="text-xs font-black text-slate-800 font-mono mt-1 block bg-amber-50 px-2 py-0.5 rounded border border-amber-100 inline-block">
+                            {toBengaliNum(cycleInfo.daysPassedInCycle)}তম দিন চলছে (মোট {toBengaliNum(cycleInfo.totalDaysInCycle)} দিন)
+                          </span>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
 
                 {/* Main Information Grid */}

@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { Student, Batch, AttendanceRecord, FeeCollection, ModelTestMark } from '../types';
 import { BookOpen, Calendar, CreditCard, Award, ChevronRight, UserCheck, ShieldAlert, FileText, CheckCircle, Clock } from 'lucide-react';
+import { isFriday } from '../utils/dateHelpers';
+
 
 interface StudentDashboardProps {
   students: Student[];
@@ -37,7 +39,7 @@ export default function StudentDashboard({
     if (!selectedStudent) return null;
 
     // 1. Attendance Rate
-    const studAttendance = attendance.filter((a) => a.studentId === selectedStudent.id);
+    const studAttendance = attendance.filter((a) => a.studentId === selectedStudent.id && !isFriday(a.date));
     const totalDays = studAttendance.length;
     const presentDays = studAttendance.filter((a) => a.status === 'Present').length;
     const attendanceRate = totalDays > 0 ? (presentDays / totalDays) * 100 : 0;

@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Student, Batch, AttendanceRecord, FeeCollection, ModelTestMark } from '../types';
 import { Language, translations } from '../utils/translations';
-import { getMonthsDifference } from '../utils/dateHelpers';
+import { getMonthsDifference, isFriday } from '../utils/dateHelpers';
 import {
   ResponsiveContainer,
   LineChart,
@@ -170,8 +170,9 @@ export default function Dashboard({
     }, 0);
 
     // General Attendance Rate
-    const totalAttRecords = attendance.length;
-    const presentCount = attendance.filter((a) => a.status === 'Present').length;
+    const nonFridayAttendance = attendance.filter((a) => !isFriday(a.date));
+    const totalAttRecords = nonFridayAttendance.length;
+    const presentCount = nonFridayAttendance.filter((a) => a.status === 'Present').length;
     const averageAttendance = totalAttRecords > 0 ? (presentCount / totalAttRecords) * 100 : 0;
 
     return {
@@ -191,7 +192,7 @@ export default function Dashboard({
     const leaderBoard = students
       .map((student) => {
         const studentAttendance = attendance.filter(
-          (a) => a.studentId === student.id && a.date.startsWith('2026-06')
+          (a) => a.studentId === student.id && a.date.startsWith('2026-06') && !isFriday(a.date)
         );
         const totalDays = studentAttendance.length;
         const presentDays = studentAttendance.filter((a) => a.status === 'Present').length;

@@ -93,4 +93,15 @@
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 15px !important;
   }
+  #printable-attendance-report, #printable-attendance-report * {
+    visibility: visible;
+  }
+  #printable-attendance-report {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    border: none;
+    background: white;
+  }
 }

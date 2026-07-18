@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Student, Batch, AttendanceRecord, ModelTestMark } from '../types';
 import { Trophy, Calendar, Award, Star, Download, Printer, Medal, Crown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { isFriday } from '../utils/dateHelpers';
+
 
 interface BestStudentProps {
   students: Student[];
@@ -55,30 +57,30 @@ export default function BestStudent({
     let rankBadgeColor = '';
     let rankTextColor = '';
     if (selectedCertStudent.rank === 1) {
-      rankText = 'র‌্যাঙ্ক ১ (প্রথম স্থান)';
+      rankText = 'র্যাঙ্ক ১ (প্রথম স্থান)';
       rankBadgeColor = 'bg-amber-100 border-amber-300';
       rankTextColor = 'text-amber-600';
     } else if (selectedCertStudent.rank === 2) {
-      rankText = 'র‌্যাঙ্ক ২ (দ্বিতীয় স্থান)';
+      rankText = 'র্যাঙ্ক ২ (দ্বিতীয় স্থান)';
       rankBadgeColor = 'bg-slate-100 border-slate-300';
       rankTextColor = 'text-slate-600';
     } else if (selectedCertStudent.rank === 3) {
-      rankText = 'র‌্যাঙ্ক ৩ (তৃতীয় স্থান)';
+      rankText = 'র্যাঙ্ক ৩ (তৃতীয় স্থান)';
       rankBadgeColor = 'bg-amber-50 border-amber-200';
       rankTextColor = 'text-amber-700';
     } else {
-      rankText = `র‌্যাঙ্ক ${toBengaliNumber(selectedCertStudent.rank)}`;
+      rankText = `র্যাঙ্ক ${toBengaliNumber(selectedCertStudent.rank)}`;
       rankBadgeColor = 'bg-slate-50 border-slate-200';
       rankTextColor = 'text-slate-500';
     }
 
     const scoreDescription = selectedCertStudent.rank === 1
-      ? `প্রতিষ্ঠানের সর্বোচ্চ <strong class="text-amber-600">${selectedCertStudent.totalScore.toFixed(1)}</strong> স্কোর অর্জন করে <strong class="text-amber-600">র‌্যাঙ্ক ১ (প্রথম স্থান)</strong> অর্জন করেছেন।`
+      ? `প্রতিষ্ঠানের সর্বোচ্চ <strong class="text-amber-600">${selectedCertStudent.totalScore.toFixed(1)}</strong> স্কোর অর্জন করে <strong class="text-amber-600">র্যাঙ্ক ১ (প্রথম স্থান)</strong> অর্জন করেছেন।`
       : selectedCertStudent.rank === 2
-      ? `প্রতিষ্ঠানের অসামান্য <strong class="text-slate-600">${selectedCertStudent.totalScore.toFixed(1)}</strong> স্কোর অর্জন করে <strong class="text-slate-600">র‌্যাঙ্ক ২ (দ্বিতীয় স্থান)</strong> অর্জন করেছেন।`
+      ? `প্রতিষ্ঠানের অসামান্য <strong class="text-slate-600">${selectedCertStudent.totalScore.toFixed(1)}</strong> স্কোর অর্জন করে <strong class="text-slate-600">র্যাঙ্ক ২ (দ্বিতীয় স্থান)</strong> অর্জন করেছেন।`
       : selectedCertStudent.rank === 3
-      ? `প্রতিষ্ঠানের গৌরবময় <strong class="text-amber-700">${selectedCertStudent.totalScore.toFixed(1)}</strong> স্কোর অর্জন করে <strong class="text-amber-700">র‌্যাঙ্ক ৩ (তৃতীয় স্থান)</strong> অর্জন করেছেন।`
-      : `প্রতিষ্ঠানের গৌরবময় <strong class="text-slate-700">${selectedCertStudent.totalScore.toFixed(1)}</strong> স্কোর অর্জন করে <strong class="text-slate-700">র‌্যাঙ্ক ${toBengaliNumber(selectedCertStudent.rank)}</strong> অর্জন করেছেন।`;
+      ? `প্রতিষ্ঠানের গৌরবময় <strong class="text-amber-700">${selectedCertStudent.totalScore.toFixed(1)}</strong> স্কোর অর্জন করে <strong class="text-amber-700">র্যাঙ্ক ৩ (তৃতীয় স্থান)</strong> অর্জন করেছেন।`
+      : `প্রতিষ্ঠানের গৌরবময় <strong class="text-slate-700">${selectedCertStudent.totalScore.toFixed(1)}</strong> স্কোর অর্জন করে <strong class="text-slate-700">র্যাঙ্ক ${toBengaliNumber(selectedCertStudent.rank)}</strong> অর্জন করেছেন।`;
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -218,7 +220,7 @@ export default function BestStudent({
         <svg class="h-10 w-10 text-amber-500 mx-auto opacity-70 mb-0.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138z"/>
         </svg>
-        <span class="text-[9px] text-amber-600 block font-black tracking-widest">ICT PVT</span>
+        <span class="text-[9px] text-amber-600 block font-black tracking-widest">SMS PRO</span>
       </div>
       <div class="text-center">
         <div class="border-t border-slate-300 pt-1.5 w-28 mx-auto font-black text-slate-700">প্রধান পরিচালক</div>
@@ -327,7 +329,7 @@ export default function BestStudent({
       </p>
     </div>
     <div class="text-right">
-      <div class="text-lg font-black text-indigo-600">ICT PVT</div>
+      <div class="text-lg font-black text-indigo-600">SMS PRO</div>
       <div class="text-[10px] text-slate-400 font-mono">তারিখ: ${new Date().toLocaleDateString('bn-BD')}</div>
     </div>
   </div>
@@ -387,7 +389,7 @@ export default function BestStudent({
 
         // 1. Calculate Attendance Percentage
         const studentAttendance = attendance.filter(
-          (a) => a.studentId === student.id && a.date.startsWith(selectedMonth)
+          (a) => a.studentId === student.id && a.date.startsWith(selectedMonth) && !isFriday(a.date)
         );
         const totalDays = studentAttendance.length;
         const presentDays = studentAttendance.filter((a) => a.status === 'Present').length;
